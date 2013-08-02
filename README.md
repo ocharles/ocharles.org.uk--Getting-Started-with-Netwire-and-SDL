@@ -10,8 +10,8 @@ then you should be able to just run:
     cabal configure
     cabal build
 
-Each of the examples can be ran by running:
+You can run each of the examples with:
 
-* `dist/build/Challenge1/Challange1`
-* `dist/build/Challenge2/Challange2`
-* `dist/build/Challenge3/Challange3`
+* `dist/build/Challenge1/Challenge1`
+* `dist/build/Challenge2/Challenge2`
+* `dist/build/Challenge3/Challenge3`
