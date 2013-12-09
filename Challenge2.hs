@@ -2,6 +2,7 @@
 import Prelude hiding ((.), id, null, filter)
 import Control.Monad (void)
 import Control.Wire hiding (empty)
+import FRP.Netwire hiding (empty)
 import Data.Monoid (Monoid)
 import Data.Set (Set, empty, insert, delete, null, filter)
 import qualified Graphics.UI.SDL as SDL
@@ -9,13 +10,15 @@ import qualified Graphics.UI.SDL as SDL
 main :: IO ()
 main = SDL.withInit [SDL.InitEverything] $ do
   screen <- SDL.setVideoMode 200 200 32 [SDL.SWSurface]
-  void $ go empty screen clockSession challenge2
+  void $ go empty screen clockSession_ challenge2 0
 
  where
 
-  go keysDown screen s w = do
+  go keysDown screen s w x = do
     keysDown' <- parseEvents keysDown
-    (x, w', s') <- stepSession_ w s keysDown'
+    (ds, s') <- stepSession s
+    (ex, w') <- stepWire w ds (Right keysDown')
+    let x' = either (const 0) id ex
 
     (SDL.mapRGB . SDL.surfaceGetPixelFormat) screen 255 255 255 >>=
         SDL.fillRect screen Nothing
@@ -24,12 +27,13 @@ main = SDL.withInit [SDL.InitEverything] $ do
         SDL.fillRect screen (Just $ SDL.Rect (round x) 0 50 50)
 
     SDL.flip screen
-    go keysDown' screen s' w'
+    SDL.delay (1000 `div` 60)
+    go keysDown' screen s' w' x'
 
-challenge2 :: (Monad m, Monoid e) => Wire e m (Set SDL.Keysym) Double
-challenge2 = integral_ 0 . challenge2_velocity
+challenge2 :: (Monad m, HasTime t s) => Wire s () m (Set SDL.Keysym) Double
+challenge2 = integral 0 . challenge2_velocity
 
-challenge2_velocity :: (Monad m, Monoid e) => Wire e m (Set SDL.Keysym) Double
+challenge2_velocity :: (Monad m, Monoid e) => Wire s e m (Set SDL.Keysym) Double
 challenge2_velocity  =  pure (-20) . when (keyDown SDL.SDLK_LEFT)
                     <|> pure 20 . when (keyDown SDL.SDLK_RIGHT)
                     <|> pure 0
